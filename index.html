@@ -76,10 +76,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
-        // --- CORRECCIÓN: Conexión a Supabase usando Variables de Entorno de Vercel ---
-        const SUPABASE_URL = '%SUPABASE_URL%';
-        const SUPABASE_KEY = '%SUPABASE_KEY%';
-        // Se usa un nombre de variable diferente para evitar conflictos.
+        // --- Conexión a Supabase ---
+        const SUPABASE_URL = 'https://tpdjyvjqfuseeqcuxxkb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwZGp5dmpxZnVzZWVxY3V4eGtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwMjU5NTYsImV4cCI6MjA3MDYwMTk1Nn0.1isVY0M_p81atzswXqh7i1d3VzCQIztqqY9ZoqShksY';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const homeContent = document.getElementById('home-content');
