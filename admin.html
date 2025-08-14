@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iquique Hotwheels - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(180deg, #111827 0%, #1a202c 100%);
+        }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .tab-button.active {
+            color: #F59E0B; /* amber-500 */
+            border-image: linear-gradient(to right, #F59E0B, #EF4444) 1;
+            border-bottom-width: 2px;
+        }
+        .card-glow {
+            position: relative;
+            overflow: hidden;
+        }
+        .card-glow:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(110deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 60%);
+            transform: skewX(-25deg);
+            transition: left 0.7s ease-in-out;
+        }
+        .card-glow:hover:before {
+            left: 150%;
+        }
+        .sold-overlay {
+            position: absolute; inset: 0; background-color: rgba(0, 0, 0, 0.7);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 2rem; font-weight: bold; z-index: 10;
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 10px #EF4444;
+        }
+        button:disabled { background-color: #4B5563; cursor: not-allowed; opacity: 0.7; }
+        .form-input {
+            background-color: #1F2937; /* gray-800 */
+            border: 1px solid #374151; /* gray-700 */
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #F59E0B;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.5);
+        }
+        .btn-primary {
+            background: linear-gradient(to right, #F59E0B, #D97706); /* amber-500 to amber-600 */
+            color: white;
+            font-weight: bold;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen">
+
+    <header class="bg-gray-900/80 backdrop-blur-sm text-white p-4 shadow-lg shadow-black/20 sticky top-0 z-20 border-b border-gray-700/50">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <a href="catalogo.html" class="flex items-center space-x-4 mb-4 sm:mb-0">
+                <!-- CAMBIO: Se reemplazó el SVG por una etiqueta <img> para el logo -->
+                <img src="https://tpdjyvjqfuseeqcuxxkb.supabase.co/storage/v1/object/public/car-images/Logo%20Hotwheels%20Iquique.jpeg" alt="Logo Iquique Hotwheels" class="h-14 w-14 rounded-full object-cover border-2 border-amber-500/50">
+                <h1 class="text-3xl font-orbitron font-bold text-white tracking-wider">Iquique <span class="text-amber-500">Hotwheels</span></h1>
+            </a>
+            <nav class="flex space-x-6 text-lg font-medium">
+                <button id="tab-home" class="tab-button active pb-1 transition-colors duration-300 hover:text-amber-400">Catálogo</button>
+                <button id="tab-sold" class="tab-button pb-1 transition-colors duration-300 hover:text-amber-400">Vendidos</button>
+                <button id="tab-admin" class="tab-button pb-1 transition-colors duration-300 hover:text-amber-400">Administración</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-8 mt-4">
+        
+        <div id="home-view" class="view">
+            <h2 class="text-4xl sm:text-5xl font-orbitron font-bold mb-8 text-white text-center tracking-wide">Catálogo Disponible</h2>
+            <div id="home-content" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"></div>
+        </div>
+
+        <div id="sold-view" class="view hidden">
+            <h2 class="text-4xl sm:text-5xl font-orbitron font-bold mb-8 text-white text-center tracking-wide">Historial de Ventas</h2>
+            <div id="sold-content" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"></div>
+        </div>
+        
+        <div id="admin-view" class="view hidden">
+            <h2 id="admin-form-title" class="text-4xl sm:text-5xl font-orbitron font-bold mb-8 text-white text-center tracking-wide">Panel de Control</h2>
+            <div class="max-w-lg mx-auto bg-gray-800/50 p-8 rounded-2xl shadow-2xl shadow-black/30 border border-gray-700">
+                <form id="admin-form" class="space-y-6">
+                    <input type="hidden" id="car-id">
+                    <input type="hidden" id="car-image-url-hidden">
+                    <div>
+                        <label for="car-name" class="block text-gray-300 mb-2 font-semibold">Nombre del Auto:</label>
+                        <input type="text" id="car-name" class="w-full p-3 rounded-lg form-input" required />
+                    </div>
+                    <div>
+                        <label for="car-series" class="block text-gray-300 mb-2 font-semibold">Serie/Colección:</label>
+                        <input type="text" id="car-series" class="w-full p-3 rounded-lg form-input" required />
+                    </div>
+                    <div>
+                        <label for="car-price" class="block text-gray-300 mb-2 font-semibold">Precio ($):</label>
+                        <input type="number" id="car-price" class="w-full p-3 rounded-lg form-input" required />
+                    </div>
+                    <div>
+                        <label for="car-image-file" class="block text-gray-300 mb-2 font-semibold">Imagen del Auto:</label>
+                        <input type="file" id="car-image-file" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200 transition-colors cursor-pointer"/>
+                        <p class="text-xs text-gray-500 mt-2">Sube una nueva imagen o deja el campo vacío para conservar la actual al editar.</p>
+                    </div>
+                    <button type="submit" id="submit-btn" class="w-full py-3 px-4 rounded-lg btn-primary text-lg">
+                        Agregar Auto
+                    </button>
+                    <button type="button" id="cancel-edit-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-colors hidden mt-2">
+                        Cancelar Edición
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <div id="notification" class="fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg hidden transition-all duration-300 opacity-0 transform translate-y-2">
+        ¡Operación exitosa!
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+
+    <script>
+        // --- Elementos del DOM ---
+        const tabHome = document.getElementById('tab-home');
+        const tabSold = document.getElementById('tab-sold');
+        const tabAdmin = document.getElementById('tab-admin');
+        const homeView = document.getElementById('home-view');
+        const soldView = document.getElementById('sold-view');
+        const adminView = document.getElementById('admin-view');
+        const homeContent = document.getElementById('home-content');
+        const soldContent = document.getElementById('sold-content');
+        const adminForm = document.getElementById('admin-form');
+        const carIdInput = document.getElementById('car-id');
+        const carNameInput = document.getElementById('car-name');
+        const carSeriesInput = document.getElementById('car-series');
+        const carPriceInput = document.getElementById('car-price');
+        const carImageFileInput = document.getElementById('car-image-file');
+        const carImageUrlHiddenInput = document.getElementById('car-image-url-hidden');
+        const submitBtn = document.getElementById('submit-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const adminFormTitle = document.getElementById('admin-form-title');
+        const notification = document.getElementById('notification');
+
+        // --- Notificaciones ---
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg transition-all duration-300 ${isError ? 'bg-red-600' : 'bg-green-600'} opacity-100 transform translate-y-0`;
+            setTimeout(() => {
+                notification.classList.replace('opacity-100', 'opacity-0');
+                notification.classList.replace('translate-y-0', 'translate-y-2');
+            }, 3000);
+        }
+
+        // --- Lógica de Supabase ---
+        async function fetchAndRenderCars(statusFilter) {
+            const container = statusFilter === 'available' ? homeContent : soldContent;
+            container.innerHTML = '<p class="text-center text-gray-400 col-span-full">Cargando autos...</p>';
+
+            try {
+                const { data: cars, error } = await supabase
+                    .from('cars')
+                    .select('*')
+                    .eq('status', statusFilter)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                container.innerHTML = '';
+                if (cars.length === 0) {
+                    container.innerHTML = `<p class="text-center text-gray-400 text-xl col-span-full">${statusFilter === 'sold' ? 'Aún no hay autos vendidos.' : 'No hay autos disponibles en el catálogo.'}</p>`;
+                    return;
+                }
+
+                cars.forEach(car => {
+                    const card = document.createElement('div');
+                    card.className = "bg-gray-800/50 rounded-xl shadow-lg shadow-black/20 border border-gray-700/50 overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-amber-500/20 card-glow";
+                    
+                    let buttonsHtml = '';
+                    if (statusFilter === 'sold') {
+                        buttonsHtml = `<button onclick="handleDeleteCar(${car.id}, '${car.image_url}')" class="w-full py-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition-colors font-semibold">Eliminar</button>`;
+                    } else {
+                        buttonsHtml = `
+                            <div class="grid grid-cols-1 gap-2">
+                                <button onclick="handleSellCar(${car.id})" class="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 transition-colors font-semibold">Marcar Vendido</button>
+                                <div class="grid grid-cols-2 gap-2">
+                                <button onclick="handleEditCar(${car.id})" class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors font-semibold">Editar</button>
+                                <button onclick="handleDeleteCar(${car.id}, '${car.image_url}')" class="w-full py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors font-semibold">Eliminar</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    const soldOverlayHtml = car.status === 'sold' ? `<div class="sold-overlay">VENDIDO</div>` : '';
+
+                    card.innerHTML = `
+                        ${soldOverlayHtml}
+                        <div class="aspect-w-16 aspect-h-9">
+                            <img src="${car.image_url}" alt="${car.name}" class="w-full h-full object-cover ${car.status === 'sold' ? 'opacity-40' : ''}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/FFFFFF?text=Imagen+no+disponible';" />
+                        </div>
+                        <div class="p-4 flex flex-col justify-between flex-grow">
+                            <div>
+                                <h3 class="text-xl font-bold font-orbitron text-white truncate">${car.name}</h3>
+                                <p class="text-gray-400 mt-1 text-sm">${car.series}</p>
+                                <p class="text-amber-400 font-bold mt-3 text-2xl">$${car.price.toLocaleString('es-CL')}</p>
+                            </div>
+                            <div class="mt-4">${buttonsHtml}</div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error fetching cars:', error);
+                container.innerHTML = '<p class="text-center text-red-400 col-span-full">Error al cargar los autos. Revisa la consola.</p>';
+                showNotification('Error al cargar los autos', true);
+            }
+        }
+
+        adminForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Guardando...';
+
+            const id = carIdInput.value;
+            const carData = { name: carNameInput.value, series: carSeriesInput.value, price: parseInt(carPriceInput.value) };
+            const imageFile = carImageFileInput.files[0];
+
+            try {
+                let imageUrl = carImageUrlHiddenInput.value;
+                if (imageFile) {
+                    const filePath = `public/${Date.now()}-${imageFile.name}`;
+                    const { error: uploadError } = await supabase.storage.from('car-images').upload(filePath, imageFile);
+                    if (uploadError) throw uploadError;
+                    const { data: urlData } = supabase.storage.from('car-images').getPublicUrl(filePath);
+                    imageUrl = urlData.publicUrl;
+                }
+                carData.image_url = imageUrl;
+
+                if (id) {
+                    const { error } = await supabase.from('cars').update(carData).eq('id', id);
+                    if (error) throw error;
+                    showNotification('Auto actualizado con éxito.');
+                } else {
+                    carData.status = 'available';
+                    const { error } = await supabase.from('cars').insert([carData]);
+                    if (error) throw error;
+                    showNotification('Auto agregado con éxito.');
+                }
+                adminForm.reset();
+                showView('home-view');
+            } catch (error) {
+                console.error('Error saving car:', error);
+                showNotification(`Error al guardar: ${error.message}`, true);
+            } finally {
+                submitBtn.disabled = false;
+                resetAdminForm();
+            }
+        });
+        
+        window.handleSellCar = async (id) => {
+            if (!confirm('¿Marcar este auto como vendido?')) return;
+            try {
+                const { error } = await supabase.from('cars').update({ status: 'sold' }).eq('id', id);
+                if (error) throw error;
+                showNotification('Auto marcado como vendido.');
+                fetchAndRenderCars('available');
+                fetchAndRenderCars('sold');
+            } catch (error) {
+                showNotification('Error al actualizar el auto.', true);
+            }
+        };
+
+        window.handleDeleteCar = async (id, imageUrl) => {
+            if (!confirm('¿Eliminar este auto permanentemente? Esta acción no se puede deshacer.')) return;
+            try {
+                const { error: dbError } = await supabase.from('cars').delete().eq('id', id);
+                if (dbError) throw dbError;
+                if (imageUrl) {
+                    const imagePath = imageUrl.split('/car-images/')[1];
+                    await supabase.storage.from('car-images').remove([imagePath]);
+                }
+                showNotification('Auto eliminado permanentemente.');
+                fetchAndRenderCars('available');
+                fetchAndRenderCars('sold');
+            } catch (error) {
+                showNotification('Error al eliminar el auto.', true);
+            }
+        };
+
+        window.handleEditCar = async (id) => {
+            try {
+                const { data: car, error } = await supabase.from('cars').select('*').eq('id', id).single();
+                if (error) throw error;
+                if (car) {
+                    carIdInput.value = car.id;
+                    carNameInput.value = car.name;
+                    carSeriesInput.value = car.series;
+                    carPriceInput.value = car.price;
+                    carImageUrlHiddenInput.value = car.image_url;
+                    submitBtn.textContent = 'Guardar Cambios';
+                    adminFormTitle.textContent = 'Editar Auto';
+                    cancelEditBtn.classList.remove('hidden');
+                    showView('admin-view');
+                }
+            } catch (error) {
+                showNotification('Error al cargar datos para editar.', true);
+            }
+        };
+
+        function resetAdminForm() {
+            adminForm.reset();
+            carIdInput.value = '';
+            carImageUrlHiddenInput.value = '';
+            submitBtn.textContent = 'Agregar Auto';
+            adminFormTitle.textContent = 'Panel de Control';
+            cancelEditBtn.classList.add('hidden');
+        }
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(view => view.classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            const activeTab = document.getElementById(`tab-${viewId.replace('-view', '')}`);
+            if(activeTab) activeTab.classList.add('active');
+            if (viewId === 'home-view') fetchAndRenderCars('available');
+            if (viewId === 'sold-view') fetchAndRenderCars('sold');
+            if (viewId === 'admin-view' && !carIdInput.value) resetAdminForm();
+        }
+
+        tabHome.addEventListener('click', () => showView('home-view'));
+        tabSold.addEventListener('click', () => showView('sold-view'));
+        tabAdmin.addEventListener('click', () => showView('admin-view'));
+        cancelEditBtn.addEventListener('click', () => {
+            resetAdminForm();
+            showView('home-view');
+        });
+
+        window.onload = () => showView('home-view');
+    </script>
+</body>
+</html>

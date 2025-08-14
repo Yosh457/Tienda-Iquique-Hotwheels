@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iquique Hotwheels - Catálogo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(180deg, #111827 0%, #1a202c 100%);
+        }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .card-glow {
+            position: relative;
+            overflow: hidden;
+        }
+        .card-glow:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(110deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 60%);
+            transform: skewX(-25deg);
+            transition: left 0.7s ease-in-out;
+        }
+        .card-glow:hover:before {
+            left: 150%;
+        }
+        .btn-contact {
+            background: linear-gradient(to right, #F59E0B, #D97706); /* amber-500 to amber-600 */
+            color: white;
+            font-weight: bold;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn-contact:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen">
+
+    <header class="bg-gray-900/80 backdrop-blur-sm text-white p-4 shadow-lg shadow-black/20 sticky top-0 z-20 border-b border-gray-700/50">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+             <a href="#" class="flex items-center space-x-2 mb-4 sm:mb-0">
+                <img src="https://tpdjyvjqfuseeqcuxxkb.supabase.co/storage/v1/object/public/car-images/Logo%20Hotwheels%20Iquique.jpeg" alt="Logo Iquique Hotwheels" class="h-14 w-14 rounded-full object-cover border-2 border-amber-500/50">
+                <h1 class="text-3xl font-orbitron font-bold text-white tracking-wider">Iquique <span class="text-amber-500">Hotwheels</span></h1>
+            </a>
+            <nav class="flex space-x-6 text-lg font-medium">
+                <a href="#" class="text-amber-500 border-b-2" style="border-image: linear-gradient(to right, #F59E0B, #EF4444) 1;">Catálogo</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-8 mt-4">
+        <div id="home-view">
+            <h2 class="text-4xl sm:text-5xl font-orbitron font-bold mb-8 text-white text-center tracking-wide">Modelos Disponibles</h2>
+            <div id="home-content" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                <!-- Los autos se cargarán aquí -->
+            </div>
+        </div>
+    </main>
+    
+    <footer class="text-center p-8 mt-8 text-gray-500">
+        <p>&copy; 2024 Iquique Hotwheels. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+
+    <script>
+        const homeContent = document.getElementById('home-content');
+
+        async function fetchAndRenderCatalog() {
+            homeContent.innerHTML = '<p class="text-center text-gray-400 col-span-full">Buscando los mejores modelos...</p>';
+            try {
+                const { data: cars, error } = await supabase
+                    .from('cars')
+                    .select('*')
+                    .eq('status', 'available')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                homeContent.innerHTML = '';
+                if (cars.length === 0) {
+                    homeContent.innerHTML = `<p class="text-center text-gray-400 text-xl col-span-full">No hay autos disponibles. ¡Vuelve pronto!</p>`;
+                    return;
+                }
+
+                cars.forEach(car => {
+                    const card = document.createElement('div');
+                    card.className = "bg-gray-800/50 rounded-xl shadow-lg shadow-black/20 border border-gray-700/50 overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-amber-500/20 card-glow flex flex-col";
+                    
+                    card.innerHTML = `
+                        <div class="aspect-w-16 aspect-h-9">
+                            <img src="${car.image_url}" alt="${car.name}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/1F2937/FFFFFF?text=Imagen+no+disponible';"/>
+                        </div>
+                        <div class="p-4 flex flex-col justify-between flex-grow">
+                            <div>
+                                <h3 class="text-xl font-bold font-orbitron text-white truncate">${car.name}</h3>
+                                <p class="text-gray-400 mt-1 text-sm">${car.series}</p>
+                                <p class="text-amber-400 font-bold mt-3 text-2xl">$${car.price.toLocaleString('es-CL')}</p>
+                            </div>
+                            <div class="mt-4">
+                                <a href="https://wa.me/56997144954?text=Hola,%20me%20interesa%20el%20auto%20'${encodeURIComponent(car.name)}'" target="_blank" class="block text-center w-full py-2 px-4 rounded-lg btn-contact text-base">
+                                    Contactar por WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    homeContent.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error fetching catalog:', error);
+                homeContent.innerHTML = '<p class="text-center text-red-400 col-span-full">No se pudo cargar el catálogo. Intenta de nuevo más tarde.</p>';
+            }
+        }
+
+        window.onload = fetchAndRenderCatalog;
+    </script>
+</body>
+</html>
