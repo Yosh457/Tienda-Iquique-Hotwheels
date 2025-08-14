@@ -141,7 +141,8 @@
         // --- CORRECCIÓN: Conexión a Supabase usando Variables de Entorno de Vercel ---
         const SUPABASE_URL = '%SUPABASE_URL%';
         const SUPABASE_KEY = '%SUPABASE_KEY%';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Se usa un nombre de variable diferente para evitar conflictos.
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // --- Elementos del DOM ---
         const tabHome = document.getElementById('tab-home');
@@ -180,7 +181,7 @@
             container.innerHTML = '<p class="text-center text-gray-400 col-span-full">Cargando autos...</p>';
 
             try {
-                const { data: cars, error } = await supabase
+                const { data: cars, error } = await supabaseClient
                     .from('cars')
                     .select('*')
                     .eq('status', statusFilter)
@@ -250,20 +251,20 @@
                 let imageUrl = carImageUrlHiddenInput.value;
                 if (imageFile) {
                     const filePath = `public/${Date.now()}-${imageFile.name}`;
-                    const { error: uploadError } = await supabase.storage.from('car-images').upload(filePath, imageFile);
+                    const { error: uploadError } = await supabaseClient.storage.from('car-images').upload(filePath, imageFile);
                     if (uploadError) throw uploadError;
-                    const { data: urlData } = supabase.storage.from('car-images').getPublicUrl(filePath);
+                    const { data: urlData } = supabaseClient.storage.from('car-images').getPublicUrl(filePath);
                     imageUrl = urlData.publicUrl;
                 }
                 carData.image_url = imageUrl;
 
                 if (id) {
-                    const { error } = await supabase.from('cars').update(carData).eq('id', id);
+                    const { error } = await supabaseClient.from('cars').update(carData).eq('id', id);
                     if (error) throw error;
                     showNotification('Auto actualizado con éxito.');
                 } else {
                     carData.status = 'available';
-                    const { error } = await supabase.from('cars').insert([carData]);
+                    const { error } = await supabaseClient.from('cars').insert([carData]);
                     if (error) throw error;
                     showNotification('Auto agregado con éxito.');
                 }
@@ -281,7 +282,7 @@
         window.handleSellCar = async (id) => {
             if (!confirm('¿Marcar este auto como vendido?')) return;
             try {
-                const { error } = await supabase.from('cars').update({ status: 'sold' }).eq('id', id);
+                const { error } = await supabaseClient.from('cars').update({ status: 'sold' }).eq('id', id);
                 if (error) throw error;
                 showNotification('Auto marcado como vendido.');
                 fetchAndRenderCars('available');
@@ -294,11 +295,11 @@
         window.handleDeleteCar = async (id, imageUrl) => {
             if (!confirm('¿Eliminar este auto permanentemente? Esta acción no se puede deshacer.')) return;
             try {
-                const { error: dbError } = await supabase.from('cars').delete().eq('id', id);
+                const { error: dbError } = await supabaseClient.from('cars').delete().eq('id', id);
                 if (dbError) throw dbError;
                 if (imageUrl) {
                     const imagePath = imageUrl.split('/car-images/')[1];
-                    await supabase.storage.from('car-images').remove([imagePath]);
+                    await supabaseClient.storage.from('car-images').remove([imagePath]);
                 }
                 showNotification('Auto eliminado permanentemente.');
                 fetchAndRenderCars('available');
@@ -310,7 +311,7 @@
 
         window.handleEditCar = async (id) => {
             try {
-                const { data: car, error } = await supabase.from('cars').select('*').eq('id', id).single();
+                const { data: car, error } = await supabaseClient.from('cars').select('*').eq('id', id).single();
                 if (error) throw error;
                 if (car) {
                     carIdInput.value = car.id;
